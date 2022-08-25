@@ -10,7 +10,7 @@ unsigned int bufferMultiplier = 1;
 
 int main() {
 	setlocale(LC_ALL, "");
-	std::ifstream file("data/test4.txt");
+	std::ifstream file("data/pi.txt");
 
 	///Tratamento de input
 	Input();
@@ -20,18 +20,23 @@ int main() {
 	///No pior caso, o palindromo cortado precisa de 2*palindromeSize - 1
 	auto bufferSize = 2 * palindromeSize * bufferMultiplier;
 	auto bufferPadding = (2 * palindromeSize - 1);
-	char* buffer = (char*)malloc(sizeof(char) * (bufferSize + bufferPadding));
-	while (file.get(buffer, bufferMultiplier)) {
-		std::cout << "Buffer" << "\n";
+	auto totalBufferSize = bufferSize + bufferPadding;
+	char* buffer = (char*)malloc(sizeof(char) * totalBufferSize);
+	auto bufferPage = 0;
+	while (file.get(buffer + bufferPadding, bufferSize + 1)) {
+		std::cout << "Pagina " << bufferPage << "\n";
 		///TODO: Append com os ultimos dígitos do buffer anterior + os primeiros dígitos do próximo buffer e envia para buscar o palindromo
-		auto palindromeIndex = FindPalindrome(buffer, bufferMultiplier, palindromeSize);
+		auto palindromeIndex = FindPalindrome(buffer, totalBufferSize, palindromeSize);
 		if (palindromeIndex >= 0)
 		{
-			std::cout << "É palindromo no index " << palindromeIndex << "\n";
+			std::cout << "É palindromo iniciando no digito " << (bufferPage * bufferSize) + palindromeIndex << "\n";
 			PrintPalindrome(buffer, palindromeIndex, palindromeSize);
+			break;
 		}
-		else
-			std::cout << "Não é palindromo\n";
+
+		///Passa os ultimos digitos para os primeiros, para usar na próxima busca
+		memcpy(buffer, (buffer + bufferSize), bufferPadding);
+		bufferPage++;
 	}
 }
 
@@ -105,5 +110,5 @@ void PrintPalindrome(char* buffer, unsigned int index, unsigned int palindromeSi
 	char* substring = new char[palindromeSize * 2 + 1];
 	memcpy(substring, buffer + index, palindromeSize * 2);
 	substring[palindromeSize * 2] = '\0';
-	std::cout << substring << "\n";
+	std::cout << "Palindromo: " << substring << "\n";
 }
