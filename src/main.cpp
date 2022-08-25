@@ -2,6 +2,7 @@
 #include <fstream>
 
 void Input();
+void WaitToExit();
 int FindPalindrome(char*, unsigned int, unsigned int);
 void PrintPalindrome(char*, unsigned int, unsigned int);
 
@@ -18,10 +19,11 @@ int main() {
 
 	/// O palindromo pode ser cortado pela divisória do buffer, então precisamos alocar um offset
 	///No pior caso, o palindromo cortado precisa de 2*palindromeSize - 1
-	auto bufferSize = 2 * palindromeSize * bufferMultiplier;
-	auto bufferPadding = (2 * palindromeSize - 1);
+	auto bufferSize = palindromeSize * bufferMultiplier;
+	auto bufferPadding = (palindromeSize - 1);
 	auto totalBufferSize = bufferSize + bufferPadding;
 	char* buffer = (char*)malloc(sizeof(char) * totalBufferSize);
+	memset(buffer, 0, totalBufferSize);
 	auto bufferPage = 0;
 	while (file.get(buffer + bufferPadding, bufferSize + 1)) {
 		std::cout << "Pagina " << bufferPage << "\n";
@@ -29,16 +31,19 @@ int main() {
 		auto palindromeIndex = FindPalindrome(buffer, totalBufferSize, palindromeSize);
 		if (palindromeIndex >= 0)
 		{
-			std::cout << "É palindromo iniciando no digito " << (bufferPage * bufferSize) + palindromeIndex << "\n";
+			///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
+			std::cout << "É palindromo iniciando no digito: " << (bufferPage * bufferSize) + palindromeIndex - bufferPadding + 1 << " (contagem iniciando em 1)\n";
 			PrintPalindrome(buffer, palindromeIndex, palindromeSize);
-			exit(0);
+			WaitToExit();
 		}
 
 		///Passa os ultimos digitos para os primeiros, para usar na próxima busca
 		memcpy(buffer, (buffer + bufferSize), bufferPadding);
 		bufferPage++;
 	}
-	std::cout << "Não encontrou um palindromo de tamanho " << palindromeSize << " nos arquivos fornecidos!";
+	std::cout << "Não encontrou um palindromo de tamanho " << palindromeSize << " nos arquivos fornecidos!\n";
+
+	WaitToExit();
 }
 
 void Input() {
@@ -63,8 +68,15 @@ void Input() {
 	}
 }
 
+void WaitToExit() {
+	std::cout << "Enter para sair...\n";
+	std::cin.get();
+	std::cin.get();
+	exit(0);
+}
+
 int FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindromeSize) {
-	auto radarLength = palindromeSize * 2;
+	auto radarLength = palindromeSize;
 	auto radar = new char[radarLength];
 	int index = 0;
 
@@ -108,8 +120,8 @@ int FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindrom
 }
 
 void PrintPalindrome(char* buffer, unsigned int index, unsigned int palindromeSize) {
-	char* substring = new char[palindromeSize * 2 + 1];
-	memcpy(substring, buffer + index, palindromeSize * 2);
-	substring[palindromeSize * 2] = '\0';
+	char* substring = new char[palindromeSize + 1];
+	memcpy(substring, buffer + index, palindromeSize);
+	substring[palindromeSize] = '\0';
 	std::cout << "Palindromo: " << substring << "\n";
 }
