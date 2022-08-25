@@ -31,13 +31,14 @@ int main() {
 		{
 			std::cout << "É palindromo iniciando no digito " << (bufferPage * bufferSize) + palindromeIndex << "\n";
 			PrintPalindrome(buffer, palindromeIndex, palindromeSize);
-			break;
+			exit(0);
 		}
 
 		///Passa os ultimos digitos para os primeiros, para usar na próxima busca
 		memcpy(buffer, (buffer + bufferSize), bufferPadding);
 		bufferPage++;
 	}
+	std::cout << "Não encontrou um palindromo de tamanho " << palindromeSize << " nos arquivos fornecidos!";
 }
 
 void Input() {
