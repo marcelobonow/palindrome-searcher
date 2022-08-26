@@ -1,20 +1,26 @@
 ﻿#include <iostream>
 #include <fstream>
 
-void Input();
-void WaitToExit();
+//void Input();
+//void WaitToExit();
 int FindPalindrome(char*, unsigned int, unsigned int);
 void PrintPalindrome(char*, unsigned int, unsigned int);
 
 unsigned int palindromeSize = 0;
 unsigned int bufferMultiplier = 1;
 
-int main() {
+int main(int argc, char** argv) {
 	setlocale(LC_ALL, "");
-	std::ifstream file("data/pi.txt");
+
+	auto fileLocation = argc > 1 ? argv[1] : "data/pi.txt";
+	palindromeSize = argc > 2 ? std::atoi(argv[2]) : 9;
+	bufferMultiplier = argc > 3 ? std::atoi(argv[3]) : 1000;
+	std::ifstream file(fileLocation);
+
+	std::cout << "Buscando palindromo de tamanho " << palindromeSize << " com multiplicador " << bufferMultiplier << " no arquivo " << fileLocation << "\n";
 
 	///Tratamento de input
-	Input();
+	//Input();
 
 
 	/// O palindromo pode ser cortado pela divisória do buffer, então precisamos alocar um offset
@@ -34,61 +40,47 @@ int main() {
 			///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
 			std::cout << "É palindromo iniciando no digito: " << (bufferPage * bufferSize) + palindromeIndex - bufferPadding + 1 << " (contagem iniciando em 1)\n";
 			PrintPalindrome(buffer, palindromeIndex, palindromeSize);
-			WaitToExit();
 		}
 
 		///Passa os ultimos digitos para os primeiros, para usar na próxima busca
 		memcpy(buffer, (buffer + bufferSize), bufferPadding);
 		bufferPage++;
 	}
-	std::cout << "Não encontrou um palindromo de tamanho " << palindromeSize << " nos arquivos fornecidos!\n";
-
-	WaitToExit();
+	return 0;
 }
 
-void Input() {
-	std::cout << "Digite o tamanho do palindromo: ";
-	std::string palindromeSizeInput;
-	std::cin >> palindromeSizeInput;
-	palindromeSize = std::atoi(palindromeSizeInput.c_str());
-	while (palindromeSize <= 0 && strcmp(palindromeSizeInput.c_str(), "0") != 0) {
-		std::cout << "Valor digitado inválido, tente novamente: ";
-		std::cin >> palindromeSizeInput;
-		palindromeSize = std::atoi(palindromeSizeInput.c_str());
-	}
+//void Input() {
+//	std::cout << "Digite o tamanho do palindromo: ";
+//	std::string palindromeSizeInput;
+//	std::cin >> palindromeSizeInput;
+//	palindromeSize = std::atoi(palindromeSizeInput.c_str());
+//	while (palindromeSize <= 0 && strcmp(palindromeSizeInput.c_str(), "0") != 0) {
+//		std::cout << "Valor digitado inválido, tente novamente: ";
+//		std::cin >> palindromeSizeInput;
+//		palindromeSize = std::atoi(palindromeSizeInput.c_str());
+//	}
+//
+//	std::cout << "Digite o multiplicador do buffer: ";
+//	std::string bufferMultiplierInput;
+//	std::cin >> bufferMultiplierInput;
+//	bufferMultiplier = std::atoi(bufferMultiplierInput.c_str());
+//	while (bufferMultiplier <= 0 && strcmp(bufferMultiplierInput.c_str(), "0") != 0) {
+//		std::cout << "Valor digitado inválido, tente novamente: ";
+//		std::cin >> bufferMultiplierInput;
+//		bufferMultiplier = std::atoi(bufferMultiplierInput.c_str());
+//	}
+//}
 
-	std::cout << "Digite o multiplicador do buffer: ";
-	std::string bufferMultiplierInput;
-	std::cin >> bufferMultiplierInput;
-	bufferMultiplier = std::atoi(bufferMultiplierInput.c_str());
-	while (bufferMultiplier <= 0 && strcmp(bufferMultiplierInput.c_str(), "0") != 0) {
-		std::cout << "Valor digitado inválido, tente novamente: ";
-		std::cin >> bufferMultiplierInput;
-		bufferMultiplier = std::atoi(bufferMultiplierInput.c_str());
-	}
-}
-
-void WaitToExit() {
-	std::cout << "Enter para sair...\n";
-	std::cin.get();
-	std::cin.get();
-	exit(0);
-}
+//void WaitToExit() {
+//	std::cout << "Enter para sair...\n";
+//	std::cin.get();
+//	std::cin.get();
+//	exit(0);
+//}
 
 int FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindromeSize) {
 	auto radarLength = palindromeSize;
 	auto radar = new char[radarLength];
-	int index = 0;
-
-	std::ofstream debugFile;
-	debugFile.open("debug.txt");
-
-	if (!debugFile)
-	{
-		std::cout << "Erro abrindo arquivo de debug!";
-		exit(1);
-	}
-
 
 	for (int bufferIndex = 0; bufferIndex <= (bufferSize - radarLength); bufferIndex++)
 	{
@@ -123,5 +115,15 @@ void PrintPalindrome(char* buffer, unsigned int index, unsigned int palindromeSi
 	char* substring = new char[palindromeSize + 1];
 	memcpy(substring, buffer + index, palindromeSize);
 	substring[palindromeSize] = '\0';
-	std::cout << "Palindromo: " << substring << "\n";
+
+	std::ofstream outputFile;
+	outputFile.open("output.txt", std::ios_base::app);
+
+	if (!outputFile)
+	{
+		std::cout << "Erro abrindo arquivo de saída!";
+		exit(1);
+	}
+
+	outputFile << "Palindromo: " << substring << "\n";
 }
