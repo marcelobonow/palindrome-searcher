@@ -8,13 +8,15 @@ void PrintPalindrome(char*, unsigned int, unsigned int);
 
 unsigned int palindromeSize = 0;
 unsigned int bufferMultiplier = 1;
+const char* outputFileLocation = NULL;
 
 int main(int argc, char** argv) {
 	setlocale(LC_ALL, "");
 
 	auto fileLocation = argc > 1 ? argv[1] : "data/pi.txt";
-	palindromeSize = argc > 2 ? std::atoi(argv[2]) : 9;
-	bufferMultiplier = argc > 3 ? std::atoi(argv[3]) : 1000;
+	outputFileLocation = argc > 2 ? argv[2] : "output.txt";
+	palindromeSize = argc > 3 ? std::atoi(argv[3]) : 9;
+	bufferMultiplier = argc > 4 ? std::atoi(argv[4]) : 1000;
 	std::ifstream file(fileLocation);
 
 	std::cout << "Buscando palindromo de tamanho " << palindromeSize << " com multiplicador " << bufferMultiplier << " no arquivo " << fileLocation << "\n";

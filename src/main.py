@@ -1,4 +1,8 @@
+import os
 import subprocess
 
-p1 = subprocess.run('PalindromeSearcher.exe data/pi.txt 21 1000', shell=True)
-print(p1.returncode)
+os.chdir("../bin/Release")
+p1 = subprocess.run(
+    'PalindromeSearcher.exe data/pi.txt output.txt 12 10000', shell=True)
+
+print("AQUI")
