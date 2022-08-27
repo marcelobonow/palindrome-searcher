@@ -1,10 +1,13 @@
 ﻿#include <iostream>
 #include <fstream>
+#include <string>
 
 //void Input();
 //void WaitToExit();
 int FindPalindrome(char*, unsigned int, unsigned int);
 void PrintPalindrome(char*, unsigned int, unsigned int);
+void FindFirstPrime(const char*);
+
 
 unsigned int palindromeSize = 0;
 unsigned int bufferMultiplier = 1;
@@ -20,6 +23,9 @@ int main(int argc, char** argv) {
 	std::ifstream file(fileLocation);
 
 	std::cout << "Buscando palindromo de tamanho " << palindromeSize << " com multiplicador " << bufferMultiplier << " no arquivo " << fileLocation << "\n";
+
+	FindFirstPrime(outputFileLocation);
+	return 0;
 
 	///Tratamento de input
 	//Input();
@@ -127,5 +133,31 @@ void PrintPalindrome(char* buffer, unsigned int index, unsigned int palindromeSi
 		exit(1);
 	}
 
-	outputFile << "Palindromo: " << substring << "\n";
+	outputFile << substring << "\n";
+}
+
+void FindFirstPrime(const char* fileLocation)
+{
+	uintmax_t number;
+	std::ifstream file(fileLocation);
+	while (file >> number) {
+		std::cout << number << "\n";
+
+		bool isPrime = true;
+		for (uintmax_t i = 2; i * i <= number; i++)
+		{
+			if (number % i == 0)
+			{
+				std::cout << "Não é primo \n";
+				isPrime = false;
+				break;
+			}
+		}
+		if (isPrime)
+		{
+			std::cout << "O primeiro número primo: " << number << "\n";
+			break;
+		}
+	}
+
 }

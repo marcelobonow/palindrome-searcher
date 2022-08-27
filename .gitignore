@@ -34,3 +34,5 @@ Debug/
 Release/
 .vs/
 data/
+
+output.txt
