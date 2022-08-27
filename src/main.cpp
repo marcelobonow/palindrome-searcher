@@ -1,31 +1,26 @@
 ﻿#include <iostream>
 #include <fstream>
 #include <string>
+#include <cinttypes>
 
 //void Input();
 //void WaitToExit();
 int FindPalindrome(char*, unsigned int, unsigned int);
-void PrintPalindrome(char*, unsigned int, unsigned int);
-void FindFirstPrime(const char*);
-
+uintmax_t GetPalindromeNumber(char*, unsigned int, unsigned int);
+bool IsPrime(uintmax_t);
 
 unsigned int palindromeSize = 0;
 unsigned int bufferMultiplier = 1;
-const char* outputFileLocation = NULL;
 
 int main(int argc, char** argv) {
 	setlocale(LC_ALL, "");
 
 	auto fileLocation = argc > 1 ? argv[1] : "data/pi.txt";
-	outputFileLocation = argc > 2 ? argv[2] : "output.txt";
-	palindromeSize = argc > 3 ? std::atoi(argv[3]) : 9;
-	bufferMultiplier = argc > 4 ? std::atoi(argv[4]) : 1000;
+	palindromeSize = argc > 2 ? std::atoi(argv[2]) : 9;
+	bufferMultiplier = argc > 3 ? std::atoi(argv[3]) : 100000;
 	std::ifstream file(fileLocation);
 
-	std::cout << "Buscando palindromo de tamanho " << palindromeSize << " com multiplicador " << bufferMultiplier << " no arquivo " << fileLocation << "\n";
-
-	FindFirstPrime(outputFileLocation);
-	return 0;
+	std::cout << "Searching palindrome of length " << palindromeSize << " with buffer multiplier " << bufferMultiplier << " on file " << fileLocation << "\n";
 
 	///Tratamento de input
 	//Input();
@@ -40,14 +35,24 @@ int main(int argc, char** argv) {
 	memset(buffer, 0, totalBufferSize);
 	auto bufferPage = 0;
 	while (file.get(buffer + bufferPadding, bufferSize + 1)) {
-		std::cout << "Pagina " << bufferPage << "\n";
+		std::cout << "Page " << bufferPage << "\n";
 		///TODO: Append com os ultimos dígitos do buffer anterior + os primeiros dígitos do próximo buffer e envia para buscar o palindromo
 		auto palindromeIndex = FindPalindrome(buffer, totalBufferSize, palindromeSize);
 		if (palindromeIndex >= 0)
 		{
 			///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
-			std::cout << "É palindromo iniciando no digito: " << (bufferPage * bufferSize) + palindromeIndex - bufferPadding + 1 << " (contagem iniciando em 1)\n";
-			PrintPalindrome(buffer, palindromeIndex, palindromeSize);
+			auto palindromeNumber = GetPalindromeNumber(buffer, palindromeIndex, palindromeSize);
+			auto palindromeStartingIndex = (bufferPage * bufferSize) + palindromeIndex - bufferPadding + 1;
+			if (IsPrime(palindromeNumber))
+			{
+				std::cout << "Prime palindrome number: " << palindromeNumber << "\n";
+				std::cout << "Prime palindrome start index: " << palindromeStartingIndex << "\n";
+				break;
+			}
+			else
+			{
+				std::cout << "Palindrome " << palindromeNumber << " is not prime \n";
+			}
 		}
 
 		///Passa os ultimos digitos para os primeiros, para usar na próxima busca
@@ -119,45 +124,20 @@ int FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindrom
 	return -1;
 }
 
-void PrintPalindrome(char* buffer, unsigned int index, unsigned int palindromeSize) {
-	char* substring = new char[palindromeSize + 1];
+uintmax_t GetPalindromeNumber(char* buffer, unsigned int index, unsigned int palindromeSize) {
+	char* substring = new char[palindromeSize];
 	memcpy(substring, buffer + index, palindromeSize);
-	substring[palindromeSize] = '\0';
-
-	std::ofstream outputFile;
-	outputFile.open("output.txt", std::ios_base::app);
-
-	if (!outputFile)
-	{
-		std::cout << "Erro abrindo arquivo de saída!";
-		exit(1);
-	}
-
-	outputFile << substring << "\n";
+	uintmax_t number = std::strtoimax(substring, nullptr, 10);
+	return number;
 }
 
-void FindFirstPrime(const char* fileLocation)
+
+bool IsPrime(uintmax_t number)
 {
-	uintmax_t number;
-	std::ifstream file(fileLocation);
-	while (file >> number) {
-		std::cout << number << "\n";
-
-		bool isPrime = true;
-		for (uintmax_t i = 2; i * i <= number; i++)
-		{
-			if (number % i == 0)
-			{
-				std::cout << "Não é primo \n";
-				isPrime = false;
-				break;
-			}
-		}
-		if (isPrime)
-		{
-			std::cout << "O primeiro número primo: " << number << "\n";
-			break;
-		}
+	for (uintmax_t i = 2; i * i <= number; i++)
+	{
+		if (number % i == 0)
+			return false;
 	}
-
+	return true;
 }
