@@ -59,7 +59,7 @@ namespace PiSearcher
     if (piDigit >= 0)
     {
       std::cout << "Encontrou resultado " << piDigit << std::endl;
-      result = std::to_string(piDigit + startDigit);
+      result = std::to_string(piDigit);
     }
     else
       result = "Not found";
