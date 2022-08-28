@@ -3,7 +3,11 @@ const PiSearcher = require("../build/Release/PiSearcher");
 
 const apiURL = "https://api.pi.delivery/v1/pi";
 
-async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize) {
+async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, batchIndex) {
+  if (isNaN(startDigit) || isNaN(numberOfDigits)) {
+    console.log(`[${batchIndex}] Invalid start digit or number of digits`);
+    process.exit();
+  }
   return new Promise(async (resolve, reject) => {
     try {
       const result = await axios.get(`${apiURL}?start=${startDigit}&numberOfDigits=${numberOfDigits}&radix=10`);
@@ -24,6 +28,7 @@ async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize) {
       }
     }
     catch (error) {
+      console.log("startDigit: " + startDigit + ", batchIndex: " + batchIndex);
       console.log("API error: ", error);
       await sleep(1000);
       FindPrimePalindrome();

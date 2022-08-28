@@ -1,14 +1,17 @@
 const StartSearching = require("./piDigits.js");
 const { FindPrimePalindrome } = require("./piDigits");
+const fs = require("fs");
 
 let primePalindromes = [];
 let smallerDigitFound = -1;
 
 async function GetMultipleDigits() {
+  // var access = fs.createWriteStream('./errors.log');
+  // process.stderr.write = access.write.bind(access);
   ///TODO: Fazer em multithread
   const batchSize = 10;
   const apiDigitSize = 1000;
-  const palindromeSize = 9;
+  const palindromeSize = 15;
   const offset = 0;
   const batchesIndex = Array.from(Array(batchSize).keys());
   const promises = batchesIndex.map(batchIndex => GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, offset));
@@ -24,13 +27,13 @@ async function GetMultipleDigits() {
 
 async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, offset) {
   let startDigit = 0;
-  for (let i = 0; i < 1000 && (smallerDigitFound < 0 || smallerDigitFound > startDigit); i++) {
-    const startBatchDigit = batchSize * apiDigitSize * i;
-    const overlap = (batchSize * batchIndex + i) * (palindromeSize - 1);
+  for (let i = 0; i < 100000000 && (smallerDigitFound < 0 || smallerDigitFound > startDigit); i++) {
+    const startBatchDigit = i * batchSize * apiDigitSize;
+    const startInterationDigit = batchIndex * apiDigitSize;
+    const overlap = (i * batchSize + batchIndex) * (palindromeSize - 1);
     startDigit = Math.max(0, (startBatchDigit + (apiDigitSize * batchIndex) - overlap + offset));
-    console.log(`Busca iniciando em ${startDigit} e terminando em ${startDigit + apiDigitSize}`);
+    console.log(`[${batchIndex}] Busca iniciando em ${startDigit} e terminando em ${startDigit + apiDigitSize}`);
     const result = await FindPrimePalindrome(startDigit, apiDigitSize, palindromeSize);
-    console.log(result);
     if (result != "Not found") {
       console.log("RESULTADO! " + result);
 
@@ -49,10 +52,9 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
   }
 }
 
-GetMultipleDigits();
-
 function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
+GetMultipleDigits();
