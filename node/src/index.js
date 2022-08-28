@@ -1,15 +1,18 @@
+const { performance } = require('perf_hooks');
 const StartSearching = require("./piDigits.js");
 const { FindPrimePalindrome } = require("./piDigits");
+
 const fs = require("fs");
 
 let primePalindromes = [];
 let smallerDigitFound = -1;
 
 async function GetMultipleDigits() {
-  // var access = fs.createWriteStream('./errors.log');
-  // process.stderr.write = access.write.bind(access);
+  var access = fs.createWriteStream('./errors.log');
+  process.stderr.write = access.write.bind(access);
   ///TODO: Fazer em multithread
-  const batchSize = 10;
+  process.env.SILENT = true;
+  const batchSize = 200;
   const apiDigitSize = 1000;
   const palindromeSize = 15;
   const offset = 0;
@@ -27,13 +30,22 @@ async function GetMultipleDigits() {
 
 async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, offset) {
   let startDigit = 0;
+  let startTime = performance.now();
   for (let i = 0; i < 100000000 && (smallerDigitFound < 0 || smallerDigitFound > startDigit); i++) {
+    if (batchIndex == 0 && i % 100 == 0) {
+      const endTime = performance.now();
+      console.log(startDigit);
+      console.time(`loop took ${endTime - startTime} milliseconds`);
+      startTime = performance.now();
+    }
     const startBatchDigit = i * batchSize * apiDigitSize;
-    const startInterationDigit = batchIndex * apiDigitSize;
+    const startInteractionDigit = batchIndex * apiDigitSize;
     const overlap = (i * batchSize + batchIndex) * (palindromeSize - 1);
     startDigit = Math.max(0, (startBatchDigit + (apiDigitSize * batchIndex) - overlap + offset));
-    console.log(`[${batchIndex}] Busca iniciando em ${startDigit} e terminando em ${startDigit + apiDigitSize}`);
-    const result = await FindPrimePalindrome(startDigit, apiDigitSize, palindromeSize);
+    if (process.env.SILENT != "true") {
+      console.log(`[${batchIndex}] Busca iniciando em ${startDigit} e terminando em ${startDigit + apiDigitSize}`);
+    }
+    const result = await FindPrimePalindrome(startDigit, apiDigitSize, palindromeSize, batchIndex);
     if (result != "Not found") {
       console.log("RESULTADO! " + result);
 

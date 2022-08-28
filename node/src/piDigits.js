@@ -8,6 +8,7 @@ async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, b
     console.log(`[${batchIndex}] Invalid start digit or number of digits`);
     process.exit();
   }
+
   return new Promise(async (resolve, reject) => {
     try {
       const result = await axios.get(`${apiURL}?start=${startDigit}&numberOfDigits=${numberOfDigits}&radix=10`);
@@ -29,9 +30,10 @@ async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, b
     }
     catch (error) {
       console.log("startDigit: " + startDigit + ", batchIndex: " + batchIndex);
-      console.log("API error: ", error);
-      await sleep(1000);
-      FindPrimePalindrome();
+      console.error('./errors.log', `[${batchIndex} Digit: ${startDigit} API error: ] ${error}`);
+      console.log('./errors.log', `[${batchIndex} Digit: ${startDigit} API error: ] ${error}`);
+      await sleep(10000);
+      FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, batchIndex);
     }
   });
 }
