@@ -9,5 +9,8 @@
   "scripts": {
     "dev": "ts-node-dev --inspect=0.0.0.0:9222 --respawn --transpile-only --exit-child --ignore-watch node_modules --watch src/ src/index.js",
     "build": "tsc --build"
+  },
+  "dependencies": {
+    "axios": "^0.27.2"
   }
 }
