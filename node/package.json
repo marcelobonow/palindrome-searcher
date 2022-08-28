@@ -1,0 +1,13 @@
+{
+  "name": "pi-searcher",
+  "version": "1.0.0",
+  "description": "Wrapper to fetch API for the cpp searcher",
+  "main": "index.ts",
+  "author": "Marcelo Ott",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node-dev --inspect=0.0.0.0:9222 --respawn --transpile-only --exit-child --ignore-watch node_modules --watch src/ src/index.js",
+    "build": "tsc --build"
+  }
+}

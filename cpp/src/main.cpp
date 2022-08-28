@@ -2,15 +2,24 @@
 #include <fstream>
 #include <string>
 #include <cinttypes>
+#include <vector>
 
 //void Input();
 //void WaitToExit();
-int FindPalindrome(char*, unsigned int, unsigned int);
+std::vector<unsigned int>* FindPalindrome(char*, unsigned int, unsigned int);
 uintmax_t GetPalindromeNumber(char*, unsigned int, unsigned int);
 bool IsPrime(uintmax_t);
+void PrintPalindromeColumn(const char*, uintmax_t, unsigned int);
 
 unsigned int palindromeSize = 0;
 unsigned int bufferMultiplier = 1;
+
+struct PrimePalindromes
+{
+public:
+	uintmax_t number;
+	uintmax_t index;
+};
 
 int main(int argc, char** argv) {
 	setlocale(LC_ALL, "");
@@ -18,6 +27,11 @@ int main(int argc, char** argv) {
 	auto fileLocation = argc > 1 ? argv[1] : "data/pi.txt";
 	palindromeSize = argc > 2 ? std::atoi(argv[2]) : 9;
 	bufferMultiplier = argc > 3 ? std::atoi(argv[3]) : 100000;
+
+
+	/*PrintPalindromeColumn(fileLocation, 247149, 11);
+	return 0;*/
+
 	std::ifstream file(fileLocation);
 
 	std::cout << "Searching palindrome of length " << palindromeSize << " with buffer multiplier " << bufferMultiplier << " on file " << fileLocation << "\n";
@@ -33,33 +47,59 @@ int main(int argc, char** argv) {
 	auto totalBufferSize = bufferSize + bufferPadding;
 	char* buffer = (char*)malloc(sizeof(char) * totalBufferSize);
 	memset(buffer, 0, totalBufferSize);
+	std::vector<PrimePalindromes>* primePalindromes = new std::vector<PrimePalindromes>();
 	auto bufferPage = 0;
-	while (file.get(buffer + bufferPadding, bufferSize + 1)) {
+	while (file.get(buffer + (bufferPage > 0 ? bufferPadding : 0), bufferSize + 1)) {
 		std::cout << "Page " << bufferPage << "\n";
 		///TODO: Append com os ultimos dígitos do buffer anterior + os primeiros dígitos do próximo buffer e envia para buscar o palindromo
-		auto palindromeIndex = FindPalindrome(buffer, totalBufferSize, palindromeSize);
-		if (palindromeIndex >= 0)
+		std::vector<unsigned int>* palindromesIndex = FindPalindrome(buffer, totalBufferSize, palindromeSize);
+		if (palindromesIndex->size() >= 0)
 		{
-			///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
-			auto palindromeNumber = GetPalindromeNumber(buffer, palindromeIndex, palindromeSize);
-			auto palindromeStartingIndex = (bufferPage * bufferSize) + palindromeIndex - bufferPadding + 1;
-			if (IsPrime(palindromeNumber))
+			for (std::vector<unsigned int>::iterator palindromeIterator = palindromesIndex->begin(); palindromeIterator != palindromesIndex->end();
+				++palindromeIterator)
 			{
-				std::cout << "Prime palindrome number: " << palindromeNumber << "\n";
-				std::cout << "Prime palindrome start index: " << palindromeStartingIndex << "\n";
-				break;
+				///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
+				auto palindromeNumber = GetPalindromeNumber(buffer, *palindromeIterator, palindromeSize);
+				auto palindromeStartingIndex = (bufferPage * bufferSize) + *palindromeIterator - bufferPadding + 1;
+				if (IsPrime(palindromeNumber))
+				{
+					std::cout << "Prime palindrome number: " << palindromeNumber << "\n";
+					std::cout << "Prime palindrome start index: " << palindromeStartingIndex << "\n";
+					PrimePalindromes primePalindrome;
+					primePalindrome.number = palindromeNumber;
+					primePalindrome.index = palindromeStartingIndex;
+					primePalindromes->push_back(primePalindrome);
+				}
+				else
+				{
+					std::cout << "Palindrome " << palindromeNumber << " is not prime \n";
+				}
 			}
-			else
-			{
-				std::cout << "Palindrome " << palindromeNumber << " is not prime \n";
-			}
+
 		}
 
 		///Passa os ultimos digitos para os primeiros, para usar na próxima busca
 		memcpy(buffer, (buffer + bufferSize), bufferPadding);
 		bufferPage++;
 	}
+
+	if (primePalindromes->size() > 0) {
+		std::cout << "\n\n\n####### Printing prime palindromes found #######\n";
+		for (std::vector<PrimePalindromes>::iterator primePalindromeIterator = primePalindromes->begin(); primePalindromeIterator != primePalindromes->end();
+			++primePalindromeIterator)
+		{
+			std::cout << "index: " << primePalindromeIterator->index << "\tnumber: " << primePalindromeIterator->number << "\n";
+		}
+	}
 	return 0;
+}
+
+void PrintPalindromeColumn(const char* fileLocation, uintmax_t column, unsigned int palindromeSize) {
+	std::ifstream file(fileLocation);
+	char* buffer = (char*)malloc(sizeof(char) * (palindromeSize + 2));
+	file.ignore(column - 2);
+	file.get(buffer, palindromeSize + 2);
+	std::cout << buffer;
 }
 
 //void Input() {
@@ -91,12 +131,15 @@ int main(int argc, char** argv) {
 //	exit(0);
 //}
 
-int FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindromeSize) {
+std::vector<unsigned int>* FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindromeSize) {
 	auto radarLength = palindromeSize;
 	auto radar = new char[radarLength];
 
-	for (int bufferIndex = 0; bufferIndex <= (bufferSize - radarLength); bufferIndex++)
+	std::vector<unsigned int>* results = new std::vector<unsigned int>();
+
+	for (unsigned int bufferIndex = 0; bufferIndex <= (bufferSize - radarLength); bufferIndex++)
 	{
+		///TODO: tirar o radar, tirando o memcpy extra
 		memcpy(radar, buffer + bufferIndex, radarLength);
 		auto found = true;
 		///A verificação é com o espelhamento do valor em cima do palindromo
@@ -110,7 +153,10 @@ int FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindrom
 
 			///Lida com o caso de pelo tamanho do buffer, ter ultrapassado o tamanho do arquivo
 			if (leftDigit == '\0' || rightDigit == '\0')
-				return -1;
+			{
+				found = false;
+				break;
+			}
 			if (leftDigit != rightDigit)
 			{
 				found = false;
@@ -118,10 +164,10 @@ int FindPalindrome(char* buffer, unsigned int bufferSize, unsigned int palindrom
 			}
 		}
 		if (found)
-			return bufferIndex;
+			results->push_back(bufferIndex);
 	}
 
-	return -1;
+	return results;
 }
 
 uintmax_t GetPalindromeNumber(char* buffer, unsigned int index, unsigned int palindromeSize) {
