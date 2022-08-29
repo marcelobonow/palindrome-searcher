@@ -6,7 +6,7 @@ const apiURL = "https://api.pi.delivery/v1/pi";
 async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, batchIndex) {
   if (isNaN(startDigit) || isNaN(numberOfDigits)) {
     console.log(`[${batchIndex}] Invalid start digit or number of digits`);
-    process.exit();
+    return;
   }
 
   return new Promise(async (resolve, reject) => {
@@ -30,9 +30,9 @@ async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, b
     }
     catch (error) {
       console.log("startDigit: " + startDigit + ", batchIndex: " + batchIndex);
-      console.error('./errors.log', `[${batchIndex} Digit: ${startDigit} API error: ] ${error}`);
-      console.log('./errors.log', `[${batchIndex} Digit: ${startDigit} API error: ] ${error}`);
-      await sleep(10000);
+      console.error(`[${batchIndex}] Digit: ${startDigit} API error: `, error);
+      console.log('\x1b[31m%s\x1b[0m', `[${batchIndex}] Digit: ${startDigit} API error: `, error);
+      await sleep(500);
       FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, batchIndex);
     }
   });

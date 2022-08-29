@@ -11,6 +11,7 @@
     "build": "tsc --build"
   },
   "dependencies": {
-    "axios": "^0.27.2"
+    "axios": "^0.27.2",
+    "readline-sync": "^1.4.10"
   }
 }
