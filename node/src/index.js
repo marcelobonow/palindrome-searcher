@@ -15,20 +15,25 @@ let smallerDigitFound = -1;
 let errorFile;
 let outputFile;
 let searchSize = 2;
+let index;
 let lastUpdateTime;
 
 async function GetMultipleDigits() {
-  errorFile = fs.createWriteStream('./errors.log');
-  process.stderr.write = errorFile.write.bind(errorFile);
-  outputFile = fs.createWriteStream('./output.log');
   ///TODO: Fazer em multithread
+  index = readlineSync.question('index (for files, default 0):') || 0;
   const silentMode = readlineSync.question('Silent mode (true|false):') || "false";
   const batchSize = parseInt(readlineSync.question('batchSize (default 100):')) || 100;
   const offset = parseInt(readlineSync.question('offset (default 0):')) || 0;
   searchSize = parseFloat(readlineSync.question('how many billions to search (float, default 2):')) || 2;
+  // index = 0;
   // const silentMode = false;
   // const batchSize = 100;
   // const offset = 19000000000;
+  // searchSize = 2;
+
+  errorFile = fs.createWriteStream(`./errors${index}.log`);
+  process.stderr.write = errorFile.write.bind(errorFile);
+  outputFile = fs.createWriteStream(`./output${index}.log`);
   process.env.SILENT = silentMode;
   const apiDigitSize = 1000;
   const palindromeSize = 21;
@@ -52,8 +57,9 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
   return new Promise(async (resolve, reject) => {
     let startDigit = 0;
     ///It has 1000 times less because the API retrieves 1000 digits each time 
-    const oneBillionLoop = 1000000;
-    const loopQuantity = oneBillionLoop * searchSize;
+    const loopTimesToBillion = 1000000000 / (apiDigitSize * batchSize);
+    console.log("Total loops: ", loopTimesToBillion);
+    const loopQuantity = loopTimesToBillion * searchSize;
 
     for (let i = 0; i < loopQuantity && (smallerDigitFound < 0 || smallerDigitFound > startDigit); i++) {
       let nowTime = performance.now();
@@ -63,9 +69,9 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
 
         const indexSmallestDigit = GetSmallestBatchDigitIndex();
         const smallestStartDigit = startDigitBatches[indexSmallestDigit];
-        console.log(`startDigit: ${smallestStartDigit}. ${smallestStartDigit.toExponential(4)}`);
+        console.log(`[${batchIndex}] startDigit: ${smallestStartDigit}. ${smallestStartDigit.toExponential(4)}, iteration ${i}`);
         lastUpdateTime = nowTime;
-        await appendFile("./output.log", `[${indexSmallestDigit}] Menor busca: ${smallestStartDigit}\r\n`);
+        await appendFile(`./output${index}.log`, `[${indexSmallestDigit}] Menor busca: ${smallestStartDigit}\r\n`);
         lastUpdateTime = nowTime;
       }
       const startBatchDigit = i * batchSize * apiDigitSize;
@@ -90,15 +96,15 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
           digit: absoluteDigit,
           number: result.number,
         });
-        await appendFile("./output.log", `!!!!!!!!!!!!!!!!!![${batchIndex}][P] Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
-        await appendFile("./palindromes.log", `[${batchIndex}] Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
+        await appendFile(`./output${index}.log`, `!!!!!!!!!!!!!!!!!![${batchIndex}][P] Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
+        await appendFile(`./palindromes${index}.log`, `[${batchIndex}] Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
         resolve();
         return;
       }
       else if (!result.isPrime && result.digit >= 0 && result.number >= 0) {
         console.log("Encontrou palíndromo não primo no digito " + result.digit);
         console.log("palíndromo não primo: " + result.number);
-        await appendFile("./output.log", `[${batchIndex}][NP] Encontrou palíndromo não primo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
+        await appendFile(`./output${index}.log`, `[${batchIndex}][NP] Encontrou palíndromo não primo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
       }
     }
     resolve();
