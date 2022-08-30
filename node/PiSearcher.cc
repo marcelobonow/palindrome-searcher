@@ -14,17 +14,24 @@ namespace PiSearcher
   using v8::String;
   using v8::Value;
 
-  intmax_t FindPrimePalindromes(const char *, unsigned int, uintmax_t);
-  std::vector<unsigned int> *FindPalindromes(const char *, unsigned int, unsigned int);
-  bool IsPrime(uintmax_t);
-  uintmax_t GetPalindromeNumber(const char *, unsigned int, unsigned int);
-
   struct PrimePalindromes
   {
   public:
     uintmax_t number;
     uintmax_t index;
   };
+
+  struct FindPrimePalindromesResult
+  {
+  public:
+    intmax_t palindromeIndex;
+    bool isPrime;
+  };
+
+  FindPrimePalindromesResult FindPrimePalindromes(const char *, unsigned int, uintmax_t);
+  std::vector<unsigned int> *FindPalindromes(const char *, unsigned int, unsigned int);
+  bool IsPrime(uintmax_t);
+  uintmax_t GetPalindromeNumber(const char *, unsigned int, unsigned int);
 
   void FindPalindromeNodeInterface(const FunctionCallbackInfo<Value> &args)
   {
@@ -54,15 +61,24 @@ namespace PiSearcher
     unsigned int digitsSize = digitsString.length();
     // Local<Number> num = Number::New(isolate, palindromeSize);
 
-    intmax_t piDigit = FindPrimePalindromes(digitsString.c_str(), palindromeSize, digitsSize);
+    FindPrimePalindromesResult piSearchResult = FindPrimePalindromes(digitsString.c_str(), palindromeSize, digitsSize);
     std::string result;
-    if (piDigit >= 0)
+    /// a: não encontrou
+    /// b: encontrou mas não é primo
+    /// c: encontrou e é primo
+    if (piSearchResult.palindromeIndex < 0)
+      result = "a";
+    else if (piSearchResult.isPrime)
     {
-      std::cout << "Encontrou resultado " << piDigit << std::endl;
-      result = std::to_string(piDigit);
+      std::cout << "Encontrou resultado " << piSearchResult.palindromeIndex << std::endl;
+      auto piDigitString = std::to_string(piSearchResult.palindromeIndex);
+      result = "c:" + piDigitString;
     }
     else
-      result = "Not found";
+    {
+      auto piDigitString = std::to_string(piSearchResult.palindromeIndex);
+      result = "b:" + piDigitString;
+    }
 
     args.GetReturnValue().Set(String::NewFromUtf8(isolate, result.c_str()).ToLocalChecked());
   }
@@ -72,10 +88,11 @@ namespace PiSearcher
     NODE_SET_METHOD(exports, "FindPalindrome", FindPalindromeNodeInterface);
   }
 
-  intmax_t FindPrimePalindromes(const char *digits, unsigned int palindromeSize, uintmax_t digitsLength)
+  FindPrimePalindromesResult FindPrimePalindromes(const char *digits, unsigned int palindromeSize, uintmax_t digitsLength)
   {
     // std::vector<PrimePalindromes> *primePalindromes = new std::vector<PrimePalindromes>();
     std::vector<unsigned int> *palindromesIndex = FindPalindromes(digits, digitsLength, palindromeSize);
+    FindPrimePalindromesResult result;
     if (palindromesIndex->size() >= 0)
     {
       for (std::vector<unsigned int>::iterator palindromeIterator = palindromesIndex->begin(); palindromeIterator != palindromesIndex->end();
@@ -84,6 +101,7 @@ namespace PiSearcher
         ///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
         auto palindromeNumber = GetPalindromeNumber(digits, *palindromeIterator, palindromeSize);
         auto palindromeStartingIndex = *palindromeIterator + 1;
+        result.palindromeIndex = palindromeStartingIndex;
         if (IsPrime(palindromeNumber))
         {
           std::cout << "Prime palindrome number: " << palindromeNumber << "\n";
@@ -92,15 +110,18 @@ namespace PiSearcher
           // primePalindrome.number = palindromeNumber;
           // primePalindrome.index = palindromeStartingIndex;
           // primePalindromes->push_back(primePalindrome);
-          return palindromeStartingIndex;
+          result.isPrime = true;
+          return result;
         }
         else
         {
+          result.isPrime = false;
           std::cout << "Palindrome " << palindromeNumber << " is not prime \n";
         }
       }
     }
-    return -1;
+    result.palindromeIndex = -1;
+    return result;
   }
 
   std::vector<unsigned int> *FindPalindromes(const char *buffer, unsigned int bufferSize, unsigned int palindromeSize)
