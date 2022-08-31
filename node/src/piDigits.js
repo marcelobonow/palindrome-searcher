@@ -35,7 +35,7 @@ async function FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, b
     }
     catch (error) {
       console.log("startDigit: " + startDigit + ", batchIndex: " + batchIndex);
-      console.error(`[${batchIndex}] Digit: ${startDigit} API error: `, error);
+      console.error(`[${batchIndex}] Digit: ${startDigit} API error: ${error.code}, ${error.errno}`,);
       console.log('\x1b[31m%s\x1b[0m', `[${batchIndex}] Digit: ${startDigit} API status error: ${error.code}, ${error.errno}`);
       await sleep(500);
       resolve(await FindPrimePalindrome(startDigit, numberOfDigits, palindromeSize, batchIndex));

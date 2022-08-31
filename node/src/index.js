@@ -8,7 +8,7 @@ const util = require('util');
 const appendFile = util.promisify(fs.appendFile);
 
 
-///TODO: Colocar resultado em arquivos
+///TODO: colocar no arquivo digito inicial e quantos vai fazer
 let primePalindromes = [];
 let startDigitBatches = [];
 let smallerDigitFound = -1;
@@ -17,6 +17,9 @@ let outputFile;
 let searchSize = 2;
 let index;
 let lastUpdateTime;
+let nextStartDigit;
+let endDigit;
+let startTime;
 
 async function GetMultipleDigits() {
   ///TODO: Fazer em multithread
@@ -25,7 +28,7 @@ async function GetMultipleDigits() {
   const batchSize = parseInt(readlineSync.question('batchSize (default 100):')) || 100;
   const offset = parseInt(readlineSync.question('offset (default 0):')) || 0;
   searchSize = parseFloat(readlineSync.question('how many billions to search (float, default 2):')) || 2;
-  // index = 0;
+  index = 0;
   // const silentMode = false;
   // const batchSize = 100;
   // const offset = 19000000000;
@@ -35,22 +38,32 @@ async function GetMultipleDigits() {
   process.stderr.write = errorFile.write.bind(errorFile);
   outputFile = fs.createWriteStream(`./output${index}.log`);
   process.env.SILENT = silentMode;
+  nextStartDigit = offset;
+  endDigit = offset + 1000000000 * searchSize;
   const apiDigitSize = 1000;
   const palindromeSize = 21;
   const batchesIndex = Array.from(Array(batchSize).keys());
   const promises = batchesIndex.map(batchIndex => GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, offset));
+  await appendFile(`./output${index}.log`, `Searching from ${offset} to ${endDigit} \r\n`);
+  startTime = performance.now();
   lastUpdateTime = performance.now();
   await Promise.all(promises);
   console.log("Finalizou promises");
   if (primePalindromes.length == 0) {
     console.log("Nenhum palíndromo encontrado");
+    await appendFile(`./output${index}.log`, `Nenhum palíndromo encontrado\r\n`);
   }
   for (const prime of primePalindromes) {
     console.log('----------------------------');
     console.log("Digito: " + prime.digit);
     console.log("Numero: " + prime.number);
+
+    await appendFile(`./output${index}.log`, `---------------------------\r\n`);
+    await appendFile(`./output${index}.log`, `Digit: ${prime.digit}\r\n`);
+    await appendFile(`./output${index}.log`, `Number: ${prime.number}\r\n`);
   }
   console.log('----------------------------');
+  await appendFile(`./output${index}.log`, `----------------------------\r\n`);
 }
 
 async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, offset) {
@@ -61,28 +74,34 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
     console.log("Total loops: ", loopTimesToBillion);
     const loopQuantity = loopTimesToBillion * searchSize;
 
-    for (let i = 0; i < loopQuantity && (smallerDigitFound < 0 || smallerDigitFound > startDigit); i++) {
+    for (let i = 0; nextStartDigit <= endDigit && (smallerDigitFound < 0 || smallerDigitFound > startDigit); i++) {
       let nowTime = performance.now();
-      if (nowTime - lastUpdateTime >= 5000) {
+      if (nowTime - lastUpdateTime >= 2000) {
+        const secondsRunning = (nowTime - startTime) / 1000;
+        const digitsPerHour = ((nextStartDigit - offset) / (secondsRunning)) * 3600;
         console.log("\n\n");
         console.log(`loop took ${(nowTime - lastUpdateTime) / 1000} seconds`);
+        console.log(`doing ${digitsPerHour.toFixed(2)} digits per hour (${digitsPerHour.toExponential(3)}), running for ${secondsRunning.toFixed(2)} seconds`);
+
 
         const indexSmallestDigit = GetSmallestBatchDigitIndex();
         const smallestStartDigit = startDigitBatches[indexSmallestDigit];
         console.log(`[${batchIndex}] startDigit: ${smallestStartDigit}. ${smallestStartDigit.toExponential(4)}, iteration ${i}`);
         lastUpdateTime = nowTime;
-        await appendFile(`./output${index}.log`, `[${indexSmallestDigit}] Menor busca: ${smallestStartDigit}\r\n`);
+        await appendFile(`./output${index}.log`, `[${indexSmallestDigit}] smallest digit: ${smallestStartDigit}\r\n`);
+        await appendFile(`./output${index}.log`, `[${indexSmallestDigit}] doing ${digitsPerHour.toFixed(2)} digits per hour (${digitsPerHour.toExponential(3)}), running for ${secondsRunning.toFixed(2)} seconds\r\n`);
         lastUpdateTime = nowTime;
       }
-      const startBatchDigit = i * batchSize * apiDigitSize;
+      let startBatchDigit = nextStartDigit - (palindromeSize - 1);
+      nextStartDigit = startBatchDigit + apiDigitSize;
       const startInteractionDigit = batchIndex * apiDigitSize;
-      const overlap = (i * batchSize + batchIndex) * (palindromeSize - 1);
-      startDigit = Math.max(0, (startBatchDigit + (apiDigitSize * batchIndex) - overlap + offset));
-      startDigitBatches[batchIndex] = startDigit;
+      if (startBatchDigit < 0)
+        startBatchDigit = 0;
+      startDigitBatches[batchIndex] = startBatchDigit;
       if (process.env.SILENT != "true") {
-        console.log(`[${batchIndex}] Busca iniciando em ${startDigit} e terminando em ${startDigit + apiDigitSize}`);
+        console.log(`[${batchIndex}] Busca iniciando em ${startBatchDigit} e terminando em ${nextStartDigit}`);
       }
-      const result = await FindPrimePalindrome(startDigit, apiDigitSize, palindromeSize, batchIndex);
+      const result = await FindPrimePalindrome(startBatchDigit, apiDigitSize, palindromeSize, batchIndex);
       if (result.isPrime && result.digit >= 0 && result.number >= 0) {
         console.log("RESULTADO! ", result);
 
