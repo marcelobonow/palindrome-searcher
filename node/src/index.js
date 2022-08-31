@@ -23,16 +23,18 @@ let startTime;
 
 async function GetMultipleDigits() {
   ///TODO: Fazer em multithread
-  index = readlineSync.question('index (for files, default 0):') || 0;
-  const silentMode = readlineSync.question('Silent mode (true|false):') || "false";
-  const batchSize = parseInt(readlineSync.question('batchSize (default 100):')) || 100;
-  const offset = parseInt(readlineSync.question('offset (default 0):')) || 0;
-  searchSize = parseFloat(readlineSync.question('how many billions to search (float, default 2):')) || 2;
+
+  // index = readlineSync.question('index (for files, default 0):') || 0;
+  // const silentMode = readlineSync.question('Silent mode (true|false):') || "false";
+  // const batchSize = parseInt(readlineSync.question('batchSize (default 100):')) || 100;
+  // const offset = parseInt(readlineSync.question('offset (default 0):')) || 0;
+  // searchSize = parseFloat(readlineSync.question('how many billions to search (float, default 2):')) || 2;
+
   index = 0;
-  // const silentMode = false;
-  // const batchSize = 100;
-  // const offset = 19000000000;
-  // searchSize = 2;
+  const silentMode = true;
+  const batchSize = 150;
+  const offset = 100000000000;
+  searchSize = 40;
 
   errorFile = fs.createWriteStream(`./errors${index}.log`);
   process.stderr.write = errorFile.write.bind(errorFile);
@@ -76,12 +78,14 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
 
     for (let i = 0; nextStartDigit <= endDigit && (smallerDigitFound < 0 || smallerDigitFound > startDigit); i++) {
       let nowTime = performance.now();
-      if (nowTime - lastUpdateTime >= 2000) {
+      if (nowTime - lastUpdateTime >= 30000) {
         const secondsRunning = (nowTime - startTime) / 1000;
         const digitsPerHour = ((nextStartDigit - offset) / (secondsRunning)) * 3600;
+        const estimatedTime = (endDigit - nextStartDigit) / digitsPerHour;
         console.log("\n\n");
         console.log(`loop took ${(nowTime - lastUpdateTime) / 1000} seconds`);
         console.log(`doing ${digitsPerHour.toFixed(2)} digits per hour (${digitsPerHour.toExponential(3)}), running for ${secondsRunning.toFixed(2)} seconds`);
+        console.log(`Estimated remaining minutes ${estimatedTime * 60}`);
 
 
         const indexSmallestDigit = GetSmallestBatchDigitIndex();
@@ -90,6 +94,7 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
         lastUpdateTime = nowTime;
         await appendFile(`./output${index}.log`, `[${indexSmallestDigit}] smallest digit: ${smallestStartDigit}\r\n`);
         await appendFile(`./output${index}.log`, `[${indexSmallestDigit}] doing ${digitsPerHour.toFixed(2)} digits per hour (${digitsPerHour.toExponential(3)}), running for ${secondsRunning.toFixed(2)} seconds\r\n`);
+        await appendFile(`./output${index}.log`, `[${indexSmallestDigit}] Estimated remaining minutes ${estimatedTime * 60}\r\n`);
         lastUpdateTime = nowTime;
       }
       let startBatchDigit = nextStartDigit - (palindromeSize - 1);
@@ -99,7 +104,7 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
         startBatchDigit = 0;
       startDigitBatches[batchIndex] = startBatchDigit;
       if (process.env.SILENT != "true") {
-        console.log(`[${batchIndex}] Busca iniciando em ${startBatchDigit} e terminando em ${nextStartDigit}`);
+        console.log(`[${batchIndex}]Busca iniciando em ${startBatchDigit} e terminando em ${nextStartDigit}`);
       }
       const result = await FindPrimePalindrome(startBatchDigit, apiDigitSize, palindromeSize, batchIndex);
       if (result.isPrime && result.digit >= 0 && result.number >= 0) {
@@ -115,15 +120,15 @@ async function GetDigits(batchIndex, batchSize, apiDigitSize, palindromeSize, of
           digit: absoluteDigit,
           number: result.number,
         });
-        await appendFile(`./output${index}.log`, `!!!!!!!!!!!!!!!!!![${batchIndex}][P] Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
-        await appendFile(`./palindromes${index}.log`, `[${batchIndex}] Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
+        await appendFile(`./ output${index}.log`, `!!!!!!!!!!!!!!!!!![${batchIndex}][P] Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
+        await appendFile(`./ palindromes${index}.log`, `[${batchIndex}]Encontrou palíndromo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
         resolve();
         return;
       }
       else if (!result.isPrime && result.digit >= 0 && result.number >= 0) {
         console.log("Encontrou palíndromo não primo no digito " + result.digit);
         console.log("palíndromo não primo: " + result.number);
-        await appendFile(`./output${index}.log`, `[${batchIndex}][NP] Encontrou palíndromo não primo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
+        await appendFile(`./ output${index}.log`, `[${batchIndex}][NP] Encontrou palíndromo não primo no digito: ${absoluteDigit}, número: ${result.number}\r\n`);
       }
     }
     resolve();

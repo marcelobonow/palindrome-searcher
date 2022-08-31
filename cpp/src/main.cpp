@@ -13,6 +13,7 @@ void PrintPalindromeColumn(const char*, uintmax_t, unsigned int);
 
 unsigned int palindromeSize = 0;
 unsigned int bufferMultiplier = 1;
+const char* outputFileLocation = NULL;
 
 struct PrimePalindromes
 {
@@ -25,8 +26,9 @@ int main(int argc, char** argv) {
 	setlocale(LC_ALL, "");
 
 	auto fileLocation = argc > 1 ? argv[1] : "data/pi.txt";
-	palindromeSize = argc > 2 ? std::atoi(argv[2]) : 9;
+	palindromeSize = argc > 2 ? std::atoi(argv[2]) : 21;
 	bufferMultiplier = argc > 3 ? std::atoi(argv[3]) : 100000;
+	outputFileLocation = argc > 4 ? argv[4] : "output.txt";
 
 
 	/*PrintPalindromeColumn(fileLocation, 247149, 11);
@@ -49,6 +51,15 @@ int main(int argc, char** argv) {
 	memset(buffer, 0, totalBufferSize);
 	std::vector<PrimePalindromes>* primePalindromes = new std::vector<PrimePalindromes>();
 	auto bufferPage = 0;
+	std::ofstream outputFile;
+	outputFile.open(outputFileLocation, std::ios_base::app);
+
+	if (!outputFile)
+	{
+		std::cout << "Erro abrindo arquivo de saída!";
+		exit(1);
+	}
+
 	while (file.get(buffer + (bufferPage > 0 ? bufferPadding : 0), bufferSize + 1)) {
 		std::cout << "Page " << bufferPage << "\n";
 		///TODO: Append com os ultimos dígitos do buffer anterior + os primeiros dígitos do próximo buffer e envia para buscar o palindromo
@@ -61,19 +72,21 @@ int main(int argc, char** argv) {
 				///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
 				auto palindromeNumber = GetPalindromeNumber(buffer, *palindromeIterator, palindromeSize);
 				auto palindromeStartingIndex = (bufferPage * bufferSize) + *palindromeIterator - bufferPadding + 1;
-				if (IsPrime(palindromeNumber))
-				{
-					std::cout << "Prime palindrome number: " << palindromeNumber << "\n";
-					std::cout << "Prime palindrome start index: " << palindromeStartingIndex << "\n";
-					PrimePalindromes primePalindrome;
-					primePalindrome.number = palindromeNumber;
-					primePalindrome.index = palindromeStartingIndex;
-					primePalindromes->push_back(primePalindrome);
-				}
+				/*if (IsPrime(palindromeNumber))
+				{*/
+				std::cout << "Prime palindrome number: " << palindromeNumber << "\n";
+				std::cout << "Prime palindrome start index: " << palindromeStartingIndex << "\n";
+
+				outputFile << "index: " << palindromeStartingIndex << ",number: " << palindromeNumber << "\r\n";
+				PrimePalindromes primePalindrome;
+				primePalindrome.number = palindromeNumber;
+				primePalindrome.index = palindromeStartingIndex;
+				primePalindromes->push_back(primePalindrome);
+				/*}
 				else
 				{
 					std::cout << "Palindrome " << palindromeNumber << " is not prime \n";
-				}
+				}*/
 			}
 
 		}
@@ -91,6 +104,12 @@ int main(int argc, char** argv) {
 			std::cout << "index: " << primePalindromeIterator->index << "\tnumber: " << primePalindromeIterator->number << "\n";
 		}
 	}
+	else {
+		std::cout << "\n\n\n####### No prime palindrome found#######\n";
+		outputFile << "\n\n\n####### No prime palindrome found#######\n";
+	}
+	std::cout << "Total digits read " << (bufferPage * bufferSize) << " digits\n";
+	outputFile << "Total digits read " << ((bufferPage - 1) * bufferSize) << " digits\n";
 	return 0;
 }
 
