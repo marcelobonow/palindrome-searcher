@@ -8,7 +8,7 @@
 // void Input();
 // void WaitToExit();
 std::vector<unsigned int> *FindPalindrome(char *, unsigned int, unsigned int);
-__uint128_t GetPalindromeNumber(char *, unsigned int, unsigned int);
+std::string GetPalindromeNumberAsString(char *, unsigned int, unsigned int);
 bool IsPrime(uintmax_t);
 void PrintPalindromeColumn(const char *, uintmax_t, unsigned int);
 std::string GetNumberAsString(__uint128_t);
@@ -20,7 +20,7 @@ const char *outputFileLocation = NULL;
 struct PrimePalindromes
 {
 public:
-  uintmax_t number;
+  std::string number;
   uintmax_t index;
 };
 
@@ -74,15 +74,15 @@ int main(int argc, char **argv)
            ++palindromeIterator)
       {
         ///É necessário tirar o buffer padding porque na primeira rodada não há buffer padding
-        __uint128_t palindromeNumber = GetPalindromeNumber(buffer, *palindromeIterator, palindromeSize);
+        std::string palindromeNumber = GetPalindromeNumberAsString(buffer, *palindromeIterator, palindromeSize);
         auto palindromeStartingIndex = (bufferPage * bufferSize) + *palindromeIterator - (bufferPadding * (bufferPage - 1)) + 1;
         /*if (IsPrime(palindromeNumber))
         {*/
 
-        std::cout << "Prime palindrome number: " << GetNumberAsString(palindromeNumber) << "\n";
+        std::cout << "Prime palindrome number: " << palindromeNumber << "\n";
         std::cout << "Prime palindrome start index: " << palindromeStartingIndex << "\n";
 
-        outputFile << "index: " << palindromeStartingIndex << ",number: " << GetNumberAsString(palindromeNumber) << "\r\n";
+        outputFile << "index: " << palindromeStartingIndex << ",number: " << palindromeNumber << "\r\n";
         PrimePalindromes primePalindrome;
         primePalindrome.number = palindromeNumber;
         primePalindrome.index = palindromeStartingIndex;
@@ -103,10 +103,12 @@ int main(int argc, char **argv)
   if (primePalindromes->size() > 0)
   {
     std::cout << "\n\n\n####### Printing prime palindromes found #######\n";
+    outputFile << "\n\n\n####### Printing prime palindromes found #######\n";
     for (std::vector<PrimePalindromes>::iterator primePalindromeIterator = primePalindromes->begin(); primePalindromeIterator != primePalindromes->end();
          ++primePalindromeIterator)
     {
       std::cout << "index: " << primePalindromeIterator->index << "\tnumber: " << primePalindromeIterator->number << "\n";
+      outputFile << "index: " << primePalindromeIterator->index << "\tnumber: " << primePalindromeIterator->number << "\n";
     }
   }
   else
@@ -224,12 +226,15 @@ __int128_t atoint128_t(const char *s)
   return val;
 }
 
-__uint128_t GetPalindromeNumber(char *buffer, unsigned int index, unsigned int palindromeSize)
+std::string GetPalindromeNumberAsString(char *buffer, unsigned int index, unsigned int palindromeSize)
 {
-  char *substring = new char[palindromeSize];
+  char *substring = new char[palindromeSize + 1];
   memcpy(substring, buffer + index, palindromeSize);
-  __uint128_t number = atoint128_t(substring);
-  return number;
+  substring[palindromeSize] = '\0';
+  std::string cppString = substring;
+  return cppString;
+  // __uint128_t number = atoint128_t(substring);
+  // return number;
 }
 
 bool IsPrime(uintmax_t number)
